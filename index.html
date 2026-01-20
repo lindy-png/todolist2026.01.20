@@ -168,6 +168,8 @@
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
+            cursor: pointer;
+            transition: all 0.2s;
         }
 
         .todo-item.completed .todo-checkbox {
@@ -388,6 +390,19 @@
 
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', () => {
+            // Set up event delegation for checkbox clicks
+            const todoList = document.getElementById('todoList');
+            if (todoList) {
+                todoList.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('todo-checkbox')) {
+                        const taskKey = e.target.getAttribute('data-task-key');
+                        if (taskKey) {
+                            toggleTask(taskKey, e.target);
+                        }
+                    }
+                });
+            }
+
             if (config.spreadsheetId) {
                 document.getElementById('spreadsheetId').value = config.spreadsheetId;
                 document.getElementById('sheetGid').value = config.sheetGid;
@@ -553,7 +568,7 @@
 
                 return `
                     <li class="todo-item ${isCompleted ? 'completed' : ''}" data-task-key="${escapeHtml(taskKey)}">
-                        <div class="todo-checkbox" onclick="toggleTask('${escapeHtml(taskKey)}', this)"></div>
+                        <div class="todo-checkbox" data-task-key="${escapeHtml(taskKey)}"></div>
                         <div class="todo-content">
                             <div class="todo-text">${escapeHtml(task)}</div>
                             ${metaHtml}
@@ -593,6 +608,7 @@
         }
 
         function toggleTask(taskKey, checkboxElement) {
+            console.log('Toggle task:', taskKey); // Debug log
             const todoItem = checkboxElement.closest('.todo-item');
             const isCurrentlyCompleted = completedTasks.has(taskKey);
 
