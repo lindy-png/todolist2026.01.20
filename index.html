@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Google Sheets Todo List</title>
+    <title>Todos</title>
     <style>
         * {
             margin: 0;
@@ -13,34 +13,69 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #f5f5f5;
             min-height: 100vh;
-            padding: 40px 20px;
+            color: #1a1a1a;
         }
 
         .container {
-            max-width: 600px;
+            max-width: 800px;
             margin: 0 auto;
+            padding: 24px;
         }
 
-        h1 {
-            color: white;
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 2.5rem;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
         }
 
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        .header-title svg {
+            width: 24px;
+            height: 24px;
+            color: #e74c3c;
+        }
+
+        .new-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: none;
+            border: none;
+            color: #666;
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .new-btn:hover {
+            background: #e8e8e8;
+        }
+
+        /* Config Panel */
         .config-panel {
             background: white;
             border-radius: 16px;
             padding: 24px;
             margin-bottom: 24px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
         }
 
         .config-panel h2 {
-            font-size: 1.1rem;
+            font-size: 1rem;
             color: #333;
             margin-bottom: 16px;
         }
@@ -48,7 +83,7 @@
         .config-panel input {
             width: 100%;
             padding: 12px 16px;
-            border: 2px solid #e0e0e0;
+            border: 1px solid #e0e0e0;
             border-radius: 8px;
             font-size: 14px;
             margin-bottom: 12px;
@@ -57,76 +92,39 @@
 
         .config-panel input:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #007AFF;
         }
 
         .config-panel button {
             width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 12px;
+            background: #007AFF;
             color: white;
             border: none;
             border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
+            font-size: 15px;
+            font-weight: 500;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: background 0.2s;
         }
 
         .config-panel button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            background: #0066DD;
         }
 
-        .todo-container {
+        .help-text {
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 12px;
+            line-height: 1.5;
+        }
+
+        /* Todo List */
+        .todo-card {
             background: white;
             border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-        }
-
-        .todo-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 16px;
-            border-bottom: 2px solid #f0f0f0;
-        }
-
-        .todo-header h2 {
-            font-size: 1.3rem;
-            color: #333;
-        }
-
-        .header-buttons {
-            display: flex;
-            gap: 8px;
-        }
-
-        .refresh-btn, .config-btn {
-            background: none;
-            border: 2px solid #667eea;
-            color: #667eea;
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
-
-        .refresh-btn:hover, .config-btn:hover {
-            background: #667eea;
-            color: white;
-        }
-
-        .config-btn {
-            border-color: #888;
-            color: #888;
-        }
-
-        .config-btn:hover {
-            background: #888;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            overflow: hidden;
         }
 
         .todo-list {
@@ -136,245 +134,244 @@
         .todo-item {
             display: flex;
             align-items: flex-start;
-            padding: 16px;
-            border-radius: 12px;
-            margin-bottom: 12px;
-            background: #f8f9fa;
-            transition: transform 0.2s, box-shadow 0.2s;
+            padding: 20px 24px;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.15s;
+        }
+
+        .todo-item:last-child {
+            border-bottom: none;
         }
 
         .todo-item:hover {
-            transform: translateX(4px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            background: #fafafa;
         }
 
-        .todo-item.completed {
-            background: #e8f5e9;
-        }
-
-        .todo-item.completed .todo-text {
-            text-decoration: line-through;
-            color: #888;
-        }
-
-        .todo-checkbox {
+        /* Status indicator */
+        .todo-indicator {
             width: 24px;
             height: 24px;
             border-radius: 50%;
-            border: 2px solid #667eea;
             margin-right: 16px;
             margin-top: 2px;
+            flex-shrink: 0;
             display: flex;
             align-items: center;
             justify-content: center;
-            flex-shrink: 0;
         }
 
-        .todo-item.completed .todo-checkbox {
-            background: #4caf50;
-            border-color: #4caf50;
+        .indicator-urgent {
+            background: #FEF3C7;
+            border: 2px solid #F59E0B;
         }
 
-        .todo-item.completed .todo-checkbox::after {
+        .indicator-urgent::after {
+            content: '!';
+            color: #D97706;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .indicator-normal {
+            background: white;
+            border: 2px solid #E5E5E5;
+        }
+
+        .indicator-done {
+            background: #D1FAE5;
+            border: 2px solid #10B981;
+        }
+
+        .indicator-done::after {
             content: '✓';
-            color: white;
-            font-weight: bold;
+            color: #059669;
+            font-weight: 600;
+            font-size: 12px;
         }
 
+        /* Todo content */
         .todo-content {
             flex: 1;
             min-width: 0;
         }
 
-        .todo-text {
-            font-size: 1rem;
-            color: #333;
-            margin-bottom: 4px;
+        .todo-title {
+            font-size: 15px;
+            font-weight: 500;
+            color: #1a1a1a;
+            margin-bottom: 6px;
             line-height: 1.4;
         }
 
+        .todo-item.completed .todo-title {
+            color: #999;
+            text-decoration: line-through;
+        }
+
         .todo-meta {
-            font-size: 0.85rem;
-            color: #888;
-            margin-top: 4px;
-        }
-
-        .todo-meta span {
-            margin-right: 12px;
-        }
-
-        .todo-status {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            margin-left: 8px;
-            flex-shrink: 0;
-        }
-
-        .status-pending {
-            background: #fff3e0;
-            color: #e65100;
-        }
-
-        .status-done {
-            background: #e8f5e9;
-            color: #2e7d32;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
             color: #888;
         }
 
-        .loading::after {
-            content: '';
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 2px solid #667eea;
-            border-top-color: transparent;
+        .todo-tag {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .todo-tag svg {
+            width: 14px;
+            height: 14px;
+            opacity: 0.6;
+        }
+
+        .meta-dot {
+            color: #ccc;
+        }
+
+        .assignee {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .assignee-icon {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .assignee-icon svg {
+            width: 12px;
+            height: 12px;
+            color: white;
+        }
+
+        .assignee-avatar {
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin-left: 10px;
-            vertical-align: middle;
+            background: #E8E8E8;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        /* Review link */
+        .todo-action {
+            color: #007AFF;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: background 0.15s;
+            flex-shrink: 0;
+            margin-left: 16px;
+        }
+
+        .todo-action:hover {
+            background: #F0F7FF;
+        }
+
+        .todo-action svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Loading & Error states */
+        .loading, .empty, .error {
+            padding: 40px;
+            text-align: center;
+            color: #888;
         }
 
         .error {
-            background: #ffebee;
-            color: #c62828;
-            padding: 16px;
-            border-radius: 8px;
-            text-align: center;
-        }
-
-        .error button {
-            margin-top: 12px;
-            padding: 8px 16px;
-            background: #c62828;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-
-        .empty {
-            text-align: center;
-            padding: 40px;
-            color: #888;
-        }
-
-        .stats {
-            display: flex;
-            gap: 16px;
-            margin-bottom: 20px;
-        }
-
-        .stat-card {
-            flex: 1;
-            background: #f8f9fa;
-            padding: 16px;
-            border-radius: 12px;
-            text-align: center;
-        }
-
-        .stat-number {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #667eea;
-        }
-
-        .stat-label {
-            font-size: 0.85rem;
-            color: #888;
-            margin-top: 4px;
+            color: #e74c3c;
         }
 
         .hidden {
             display: none;
         }
 
-        .help-text {
-            font-size: 0.85rem;
+        /* Settings button */
+        .settings-btn {
+            background: none;
+            border: none;
             color: #888;
-            margin-top: 16px;
-            padding: 12px;
-            background: #f8f9fa;
+            cursor: pointer;
+            padding: 8px;
             border-radius: 8px;
-            line-height: 1.6;
+            transition: background 0.2s;
         }
 
-        .help-text code {
-            background: #e8e8e8;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.8rem;
+        .settings-btn:hover {
+            background: #f0f0f0;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>My Todo List</h1>
-
-        <div class="config-panel" id="configPanel">
-            <h2>Connect to Google Sheets</h2>
-            <input type="text" id="spreadsheetId" placeholder="Spreadsheet ID or full Google Sheets URL">
-            <input type="text" id="apiKey" placeholder="Google API Key">
-            <input type="text" id="sheetName" placeholder="Sheet name (optional, default: Sheet1)" value="Sheet1">
-            <button onclick="connectSheet()">Connect</button>
-            <div class="help-text">
-                <strong>Setup:</strong><br>
-                1. Make your Google Sheet public (Share → Anyone with link)<br>
-                2. Get your Spreadsheet ID from the URL<br>
-                3. Enter your Google API Key<br>
+        <!-- Header -->
+        <div class="header">
+            <div class="header-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 11l3 3L22 4"/>
+                    <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+                </svg>
+                Todos
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <button class="settings-btn" onclick="showConfig()" title="Settings">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+                    </svg>
+                </button>
+                <button class="new-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <line x1="12" y1="5" x2="12" y2="19"/>
+                        <line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                    New
+                </button>
             </div>
         </div>
 
-        <div class="todo-container hidden" id="todoContainer">
-            <div class="todo-header">
-                <h2>Tasks</h2>
-                <div class="header-buttons">
-                    <button class="refresh-btn" onclick="fetchTodos()">Refresh</button>
-                    <button class="config-btn" onclick="showConfig()">Settings</button>
-                </div>
+        <!-- Config Panel -->
+        <div class="config-panel" id="configPanel">
+            <h2>Connect to Google Sheets</h2>
+            <input type="text" id="spreadsheetId" placeholder="Spreadsheet ID or full URL">
+            <input type="text" id="apiKey" placeholder="Google API Key">
+            <input type="text" id="sheetName" placeholder="Sheet name (default: Sheet1)" value="Sheet1">
+            <button onclick="connectSheet()">Connect</button>
+            <div class="help-text">
+                Make your Google Sheet public, then enter the spreadsheet ID and your API key.
             </div>
+        </div>
 
-            <div class="stats" id="stats">
-                <div class="stat-card">
-                    <div class="stat-number" id="totalTasks">0</div>
-                    <div class="stat-label">Total</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="completedTasks">0</div>
-                    <div class="stat-label">Completed</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="pendingTasks">0</div>
-                    <div class="stat-label">Pending</div>
-                </div>
-            </div>
-
+        <!-- Todo List -->
+        <div class="todo-card hidden" id="todoContainer">
             <ul class="todo-list" id="todoList">
-                <li class="loading">Loading todos...</li>
+                <li class="loading">Loading...</li>
             </ul>
         </div>
     </div>
 
     <script>
-        // Configuration
         let config = {
             spreadsheetId: localStorage.getItem('spreadsheetId') || '',
             apiKey: localStorage.getItem('apiKey') || '',
             sheetName: localStorage.getItem('sheetName') || 'Sheet1'
         };
 
-        // Initialize on page load
         document.addEventListener('DOMContentLoaded', () => {
             if (config.spreadsheetId && config.apiKey) {
                 document.getElementById('spreadsheetId').value = config.spreadsheetId;
@@ -386,10 +383,7 @@
 
         function extractSpreadsheetId(input) {
             const match = input.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
-            if (match) {
-                return match[1];
-            }
-            return input.trim();
+            return match ? match[1] : input.trim();
         }
 
         function connectSheet() {
@@ -398,136 +392,125 @@
             const apiKey = document.getElementById('apiKey').value.trim();
             const sheetName = document.getElementById('sheetName').value.trim() || 'Sheet1';
 
-            if (!spreadsheetId) {
-                alert('Please enter a Spreadsheet ID or URL');
+            if (!spreadsheetId || !apiKey) {
+                alert('Please enter both Spreadsheet ID and API Key');
                 return;
             }
 
-            if (!apiKey) {
-                alert('Please enter your Google API Key');
-                return;
-            }
-
-            // Save to localStorage
-            config.spreadsheetId = spreadsheetId;
-            config.apiKey = apiKey;
-            config.sheetName = sheetName;
+            config = { spreadsheetId, apiKey, sheetName };
             localStorage.setItem('spreadsheetId', spreadsheetId);
             localStorage.setItem('apiKey', apiKey);
             localStorage.setItem('sheetName', sheetName);
 
-            // Show todo container
             document.getElementById('configPanel').classList.add('hidden');
             document.getElementById('todoContainer').classList.remove('hidden');
-
-            // Fetch todos
             fetchTodos();
         }
 
         async function fetchTodos() {
             const todoList = document.getElementById('todoList');
-            todoList.innerHTML = '<li class="loading">Loading todos...</li>';
+            todoList.innerHTML = '<li class="loading">Loading...</li>';
 
             try {
-                // Use Google Sheets API v4
                 const range = encodeURIComponent(`${config.sheetName}!A:Z`);
                 const url = `https://sheets.googleapis.com/v4/spreadsheets/${config.spreadsheetId}/values/${range}?key=${config.apiKey}`;
-
                 const response = await fetch(url);
                 const data = await response.json();
 
-                if (data.error) {
-                    throw new Error(data.error.message || 'API Error');
-                }
-
-                if (!data.values || data.values.length === 0) {
-                    todoList.innerHTML = '<li class="empty">No data found in sheet.</li>';
-                    updateStats(0, 0);
+                if (data.error) throw new Error(data.error.message);
+                if (!data.values?.length) {
+                    todoList.innerHTML = '<li class="empty">No todos found</li>';
                     return;
                 }
 
                 renderTodos(data.values);
             } catch (error) {
-                console.error('Error fetching todos:', error);
-                todoList.innerHTML = `<li class="error">Error: ${error.message}<br><button onclick="showConfig()">Check Settings</button></li>`;
+                todoList.innerHTML = `<li class="error">Error: ${error.message}</li>`;
             }
         }
 
         function renderTodos(rows) {
             const todoList = document.getElementById('todoList');
-
             if (rows.length <= 1) {
-                todoList.innerHTML = '<li class="empty">No todos found. Add some tasks to your Google Sheet!</li>';
-                updateStats(0, 0);
+                todoList.innerHTML = '<li class="empty">No todos found</li>';
                 return;
             }
 
-            // First row is header
             const headers = rows[0].map(h => (h || '').toLowerCase().trim());
-            const taskIndex = findColumnIndex(headers, ['task', 'todo', 'item', 'title', 'name', 'description']);
-            const statusIndex = findColumnIndex(headers, ['status', 'done', 'completed', 'complete', 'checked']);
-            const dateIndex = findColumnIndex(headers, ['due', 'due date', 'deadline', 'date']);
-            const driIndex = findColumnIndex(headers, ['dri', 'owner', 'assignee', 'assigned']);
+            const taskIdx = findCol(headers, ['task', 'todo', 'title', 'name', 'description']);
+            const statusIdx = findCol(headers, ['status', 'done', 'completed']);
+            const contextIdx = findCol(headers, ['context', 'project', 'category', 'tag']);
+            const driIdx = findCol(headers, ['dri', 'owner', 'assignee', 'assigned']);
 
-            const todos = rows.slice(1).filter(row => row[taskIndex]?.trim());
+            const todos = rows.slice(1).filter(row => row[taskIdx]?.trim());
 
-            if (todos.length === 0) {
-                todoList.innerHTML = '<li class="empty">No todos found. Add some tasks to your Google Sheet!</li>';
-                updateStats(0, 0);
+            if (!todos.length) {
+                todoList.innerHTML = '<li class="empty">No todos found</li>';
                 return;
             }
-
-            let completedCount = 0;
 
             todoList.innerHTML = todos.map(row => {
-                const task = row[taskIndex] || '';
-                const status = statusIndex !== -1 ? (row[statusIndex] || '').trim() : '';
-                const statusLower = status.toLowerCase();
-                const date = dateIndex !== -1 ? (row[dateIndex] || '') : '';
-                const dri = driIndex !== -1 ? (row[driIndex] || '') : '';
+                const task = row[taskIdx] || '';
+                const status = (row[statusIdx] || '').trim().toLowerCase();
+                const context = contextIdx !== -1 ? (row[contextIdx] || '') : '';
+                const dri = driIdx !== -1 ? (row[driIdx] || '') : '';
 
-                const isCompleted = ['done', 'complete', 'completed', 'yes', 'true', '1', 'x', '✓', '✔'].includes(statusLower);
-                if (isCompleted) completedCount++;
+                const isDone = ['done', 'complete', 'completed', 'yes', 'true', 'x', '✓'].includes(status);
+                const isPending = status === 'pending' || (!isDone && status !== '');
 
-                const statusClass = isCompleted ? 'status-done' : 'status-pending';
-                const statusText = status || (isCompleted ? 'Done' : 'Pending');
+                let indicatorClass = 'indicator-normal';
+                if (isDone) indicatorClass = 'indicator-done';
+                else if (isPending) indicatorClass = 'indicator-urgent';
 
-                let metaHtml = '';
-                if (date || dri) {
-                    metaHtml = '<div class="todo-meta">';
-                    if (date) metaHtml += `<span>📅 ${escapeHtml(date)}</span>`;
-                    if (dri) metaHtml += `<span>👤 ${escapeHtml(dri)}</span>`;
-                    metaHtml += '</div>';
-                }
+                const isLindy = dri.toLowerCase().includes('lindy');
 
                 return `
-                    <li class="todo-item ${isCompleted ? 'completed' : ''}">
-                        <div class="todo-checkbox"></div>
+                    <li class="todo-item ${isDone ? 'completed' : ''}">
+                        <div class="todo-indicator ${indicatorClass}"></div>
                         <div class="todo-content">
-                            <div class="todo-text">${escapeHtml(task)}</div>
-                            ${metaHtml}
+                            <div class="todo-title">${escapeHtml(task)}</div>
+                            <div class="todo-meta">
+                                ${context ? `
+                                    <span class="todo-tag">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                        </svg>
+                                        ${escapeHtml(context)}
+                                    </span>
+                                ` : ''}
+                                ${context && dri ? '<span class="meta-dot">•</span>' : ''}
+                                ${dri ? `
+                                    <span class="assignee">
+                                        ${isLindy ? `
+                                            <span class="assignee-icon">
+                                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                                    <polygon points="12,2 15,8 22,9 17,14 18,21 12,18 6,21 7,14 2,9 9,8"/>
+                                                </svg>
+                                            </span>
+                                        ` : '<span class="assignee-avatar"></span>'}
+                                        ${escapeHtml(dri)}
+                                    </span>
+                                ` : ''}
+                            </div>
                         </div>
-                        <span class="todo-status ${statusClass}">${escapeHtml(statusText)}</span>
+                        ${isPending && !isDone ? `
+                            <a href="#" class="todo-action" onclick="return false;">
+                                Review
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="9 18 15 12 9 6"/>
+                                </svg>
+                            </a>
+                        ` : ''}
                     </li>
                 `;
             }).join('');
-
-            updateStats(todos.length, completedCount);
         }
 
-        function findColumnIndex(headers, possibleNames) {
+        function findCol(headers, names) {
             for (let i = 0; i < headers.length; i++) {
-                if (possibleNames.some(name => headers[i].includes(name))) {
-                    return i;
-                }
+                if (names.some(n => headers[i].includes(n))) return i;
             }
             return -1;
-        }
-
-        function updateStats(total, completed) {
-            document.getElementById('totalTasks').textContent = total;
-            document.getElementById('completedTasks').textContent = completed;
-            document.getElementById('pendingTasks').textContent = total - completed;
         }
 
         function showConfig() {
