@@ -431,34 +431,58 @@
             todoList.innerHTML = '<li class="loading">Loading todos...</li>';
 
             try {
-                // Use Google Sheets visualization API (works better with CORS)
-                const sheetUrl = `https://docs.google.com/spreadsheets/d/${config.spreadsheetId}/gviz/tq?tqx=out:csv&gid=${config.sheetGid}`;
+                // Fetch via JSONP-style callback using Google's visualization API
+                // This bypasses CORS since it uses a script tag
+                const csvText = await new Promise((resolve, reject) => {
+                    const callbackName = 'googleSheetCallback_' + Date.now();
+                    const script = document.createElement('script');
 
-                // Try multiple CORS proxies as fallback
-                const corsProxies = [
-                    'https://corsproxy.io/?',
-                    'https://api.codetabs.com/v1/proxy?quest='
-                ];
+                    window[callbackName] = function(response) {
+                        delete window[callbackName];
+                        document.head.removeChild(script);
 
-                let csvText = null;
-                let lastError = null;
-
-                for (const proxy of corsProxies) {
-                    try {
-                        const url = proxy + encodeURIComponent(sheetUrl);
-                        const response = await fetch(url);
-                        if (response.ok) {
-                            csvText = await response.text();
-                            break;
+                        if (response.status === 'error') {
+                            reject(new Error(response.errors?.[0]?.message || 'Failed to load sheet'));
+                            return;
                         }
-                    } catch (e) {
-                        lastError = e;
-                    }
-                }
 
-                if (!csvText) {
-                    throw new Error('Failed to fetch sheet. Make sure it\'s shared publicly.');
-                }
+                        // Convert the table data to CSV
+                        const table = response.table;
+                        const rows = [];
+
+                        // Headers
+                        rows.push(table.cols.map(col => col.label || ''));
+
+                        // Data rows
+                        table.rows.forEach(row => {
+                            rows.push(row.c.map(cell => cell ? (cell.v || '') : ''));
+                        });
+
+                        // Convert to CSV string
+                        const csv = rows.map(row =>
+                            row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
+                        ).join('\n');
+
+                        resolve(csv);
+                    };
+
+                    script.onerror = () => {
+                        delete window[callbackName];
+                        reject(new Error('Failed to load sheet. Make sure it\'s shared publicly.'));
+                    };
+
+                    const jsonpUrl = `https://docs.google.com/spreadsheets/d/${config.spreadsheetId}/gviz/tq?tqx=out:json;responseHandler:${callbackName}&gid=${config.sheetGid}`;
+                    script.src = jsonpUrl;
+                    document.head.appendChild(script);
+
+                    // Timeout after 10 seconds
+                    setTimeout(() => {
+                        if (window[callbackName]) {
+                            delete window[callbackName];
+                            reject(new Error('Request timed out'));
+                        }
+                    }, 10000);
+                });
 
                 const rows = parseCSV(csvText);
                 renderTodos(rows);
