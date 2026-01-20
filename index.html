@@ -3,406 +3,236 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Google Sheets Todo List</title>
+    <title>Todos</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
             min-height: 100vh;
-            padding: 40px 20px;
+            color: #1a1a1a;
         }
+        .container { max-width: 900px; margin: 0 auto; padding: 24px; }
 
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        h1 {
-            color: white;
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 2.5rem;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .config-panel {
-            background: white;
-            border-radius: 16px;
-            padding: 24px;
-            margin-bottom: 24px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-        }
-
-        .config-panel h2 {
-            font-size: 1.1rem;
-            color: #333;
-            margin-bottom: 16px;
-        }
-
-        .config-panel input {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 14px;
-            margin-bottom: 12px;
-            transition: border-color 0.2s;
-        }
-
-        .config-panel input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .config-panel button {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .config-panel button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-        }
-
-        .todo-container {
-            background: white;
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-        }
-
-        .todo-header {
+        .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 16px;
-            border-bottom: 2px solid #f0f0f0;
+            margin-bottom: 24px;
         }
-
-        .todo-header h2 {
-            font-size: 1.3rem;
-            color: #333;
-        }
-
-        .header-buttons {
+        .header-title {
             display: flex;
-            gap: 8px;
-        }
-
-        .refresh-btn, .config-btn {
-            background: none;
-            border: 2px solid #667eea;
-            color: #667eea;
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5rem;
             font-weight: 600;
-            transition: all 0.2s;
         }
+        .header-title svg { width: 24px; height: 24px; color: #e53935; }
+        .new-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: none;
+            border: none;
+            color: #666;
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 8px;
+        }
+        .new-btn:hover { background: #e8e8e8; }
 
-        .refresh-btn:hover, .config-btn:hover {
-            background: #667eea;
+        .config-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .config-panel h2 { font-size: 1rem; margin-bottom: 16px; }
+        .config-panel input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+        .config-panel input:focus { outline: none; border-color: #007AFF; }
+        .config-panel button {
+            width: 100%;
+            padding: 12px;
+            background: #007AFF;
             color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
         }
+        .config-panel button:hover { background: #0066DD; }
+        .help-text { font-size: 0.8rem; color: #888; margin-top: 12px; }
 
-        .config-btn {
-            border-color: #888;
-            color: #888;
+        .todo-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
         }
-
-        .config-btn:hover {
-            background: #888;
-        }
-
-        .todo-list {
-            list-style: none;
-        }
-
+        .todo-list { list-style: none; }
         .todo-item {
             display: flex;
             align-items: flex-start;
-            padding: 16px;
-            border-radius: 12px;
-            margin-bottom: 12px;
-            background: #f8f9fa;
-            transition: transform 0.2s, box-shadow 0.2s;
+            padding: 20px 24px;
+            border-bottom: 1px solid #f0f0f0;
         }
+        .todo-item:last-child { border-bottom: none; }
+        .todo-item:hover { background: #fafafa; }
 
-        .todo-item:hover {
-            transform: translateX(4px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-
-        .todo-item.completed {
-            background: #e8f5e9;
-        }
-
-        .todo-item.completed .todo-text {
-            text-decoration: line-through;
-            color: #888;
-        }
-
-        .todo-checkbox {
-            width: 24px;
-            height: 24px;
+        .todo-indicator {
+            width: 26px;
+            height: 26px;
             border-radius: 50%;
-            border: 2px solid #667eea;
             margin-right: 16px;
             margin-top: 2px;
+            flex-shrink: 0;
             display: flex;
             align-items: center;
             justify-content: center;
-            flex-shrink: 0;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .todo-item.completed .todo-checkbox {
-            background: #4caf50;
-            border-color: #4caf50;
-        }
-
-        .todo-item.completed .todo-checkbox::after {
-            content: '✓';
-            color: white;
-            font-weight: bold;
-        }
-
-        .todo-content {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .todo-text {
-            font-size: 1rem;
-            color: #333;
-            margin-bottom: 4px;
-            line-height: 1.4;
-        }
-
-        .todo-meta {
-            font-size: 0.85rem;
-            color: #888;
-            margin-top: 4px;
-        }
-
-        .todo-meta span {
-            margin-right: 12px;
-        }
-
-        .todo-status {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            margin-left: 8px;
-            flex-shrink: 0;
-        }
-
-        .status-pending {
-            background: #fff3e0;
-            color: #e65100;
-        }
-
-        .status-done {
-            background: #e8f5e9;
-            color: #2e7d32;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #888;
-        }
-
-        .loading::after {
-            content: '';
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 2px solid #667eea;
-            border-top-color: transparent;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin-left: 10px;
-            vertical-align: middle;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .error {
-            background: #ffebee;
-            color: #c62828;
-            padding: 16px;
-            border-radius: 8px;
-            text-align: center;
-        }
-
-        .error button {
-            margin-top: 12px;
-            padding: 8px 16px;
-            background: #c62828;
-            color: white;
-            border: none;
-            border-radius: 6px;
             cursor: pointer;
         }
-
-        .empty {
-            text-align: center;
-            padding: 40px;
-            color: #888;
+        .indicator-urgent {
+            background: #FEF3C7;
+            border: 2px solid #F59E0B;
         }
-
-        .stats {
-            display: flex;
-            gap: 16px;
-            margin-bottom: 20px;
-        }
-
-        .stat-card {
-            flex: 1;
-            background: #f8f9fa;
-            padding: 16px;
-            border-radius: 12px;
-            text-align: center;
-        }
-
-        .stat-number {
-            font-size: 2rem;
+        .indicator-urgent::after {
+            content: '!';
+            color: #D97706;
             font-weight: 700;
-            color: #667eea;
+            font-size: 14px;
+        }
+        .indicator-normal {
+            background: white;
+            border: 2px solid #E5E5E5;
+        }
+        .indicator-done {
+            background: #D1FAE5;
+            border: 2px solid #10B981;
+        }
+        .indicator-done::after {
+            content: '✓';
+            color: #059669;
+            font-weight: 600;
+            font-size: 12px;
         }
 
-        .stat-label {
-            font-size: 0.85rem;
+        .todo-content { flex: 1; min-width: 0; }
+        .todo-title {
+            font-size: 15px;
+            font-weight: 500;
+            color: #1a1a1a;
+            margin-bottom: 6px;
+        }
+        .todo-item.completed .todo-title {
+            color: #999;
+            text-decoration: line-through;
+        }
+        .todo-meta {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
             color: #888;
-            margin-top: 4px;
         }
-
-        .hidden {
-            display: none;
+        .todo-tag {
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
-
-        .help-text {
-            font-size: 0.85rem;
-            color: #888;
-            margin-top: 16px;
-            padding: 12px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            line-height: 1.6;
+        .todo-tag svg { width: 14px; height: 14px; opacity: 0.5; }
+        .meta-dot { color: #ccc; }
+        .assignee {
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
-
-        .help-text code {
-            background: #e8e8e8;
-            padding: 2px 6px;
+        .assignee-icon {
+            width: 18px;
+            height: 18px;
             border-radius: 4px;
-            font-size: 0.8rem;
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .assignee-icon svg { width: 11px; height: 11px; color: white; }
+        .assignee-avatar {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #E0E0E0;
         }
 
-        .success-badge {
-            background: #e8f5e9;
-            color: #2e7d32;
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            margin-bottom: 12px;
-            display: inline-block;
+        .todo-action {
+            color: #007AFF;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-left: 16px;
+            flex-shrink: 0;
         }
+        .todo-action:hover { text-decoration: underline; }
+        .todo-action svg { width: 16px; height: 16px; }
+
+        .loading, .empty, .error { padding: 40px; text-align: center; color: #888; }
+        .error { color: #e53935; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>My Todo List</h1>
+        <div class="header">
+            <div class="header-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+                </svg>
+                Todos
+            </div>
+            <button class="new-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                New
+            </button>
+        </div>
 
         <div class="config-panel" id="configPanel">
             <h2>Connect to Google Sheets</h2>
-            <input type="text" id="spreadsheetId" placeholder="Spreadsheet ID or full Google Sheets URL">
-            <input type="text" id="sheetGid" placeholder="Sheet GID (optional, default: 0)" value="0">
+            <input type="text" id="spreadsheetId" placeholder="Spreadsheet URL or ID">
+            <input type="text" id="sheetGid" placeholder="Sheet GID (default: 0)" value="0">
             <button onclick="connectSheet()">Connect</button>
-            <div class="help-text">
-                <strong>Simple setup - no API key needed!</strong><br><br>
-                1. Make your Google Sheet public (Share → Anyone with link)<br>
-                2. Paste your sheet URL or just the ID:<br>
-                   <code>docs.google.com/spreadsheets/d/<strong>[ID]</strong>/edit</code><br><br>
-                The GID is in the URL after <code>#gid=</code> (usually 0 for first sheet)
-            </div>
+            <div class="help-text">Make your Google Sheet public, then paste the URL.</div>
         </div>
 
-        <div class="todo-container hidden" id="todoContainer">
-            <div class="todo-header">
-                <h2>Tasks</h2>
-                <div class="header-buttons">
-                    <button class="refresh-btn" onclick="fetchTodos()">Refresh</button>
-                    <button class="config-btn" onclick="showConfig()">Settings</button>
-                </div>
-            </div>
-
-            <div class="stats" id="stats">
-                <div class="stat-card">
-                    <div class="stat-number" id="totalTasks">0</div>
-                    <div class="stat-label">Total</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="completedTasks">0</div>
-                    <div class="stat-label">Completed</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="pendingTasks">0</div>
-                    <div class="stat-label">Pending</div>
-                </div>
-            </div>
-
-            <ul class="todo-list" id="todoList">
-                <li class="loading">Loading todos...</li>
-            </ul>
+        <div class="todo-card hidden" id="todoContainer">
+            <ul class="todo-list" id="todoList"></ul>
         </div>
     </div>
 
     <script>
-        // Configuration
         let config = {
             spreadsheetId: localStorage.getItem('spreadsheetId') || '',
             sheetGid: localStorage.getItem('sheetGid') || '0'
         };
-
-        // Store completed tasks locally
         let completedTasks = new Set(JSON.parse(localStorage.getItem('completedTasks') || '[]'));
 
-        // Initialize on page load
         document.addEventListener('DOMContentLoaded', () => {
-            // Set up event delegation for checkbox clicks
-            const todoList = document.getElementById('todoList');
-            if (todoList) {
-                todoList.addEventListener('click', (e) => {
-                    if (e.target.classList.contains('todo-checkbox')) {
-                        const taskKey = e.target.getAttribute('data-task-key');
-                        if (taskKey) {
-                            toggleTask(taskKey, e.target);
-                        }
-                    }
-                });
-            }
-
+            document.getElementById('todoList').addEventListener('click', e => {
+                const ind = e.target.closest('.todo-indicator');
+                if (ind) toggleTask(ind.dataset.key, ind);
+            });
             if (config.spreadsheetId) {
                 document.getElementById('spreadsheetId').value = config.spreadsheetId;
                 document.getElementById('sheetGid').value = config.sheetGid;
@@ -410,234 +240,155 @@
             }
         });
 
-        function extractSpreadsheetId(input) {
-            // If it's a full URL, extract the ID
-            const match = input.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
-            if (match) {
-                return match[1];
-            }
-            // Otherwise assume it's already an ID
-            return input.trim();
-        }
-
         function connectSheet() {
-            const rawInput = document.getElementById('spreadsheetId').value.trim();
-            const spreadsheetId = extractSpreadsheetId(rawInput);
-            const sheetGid = document.getElementById('sheetGid').value.trim() || '0';
-
-            if (!spreadsheetId) {
-                alert('Please enter a Spreadsheet ID or URL');
-                return;
-            }
-
-            // Save to localStorage
-            config.spreadsheetId = spreadsheetId;
-            config.sheetGid = sheetGid;
-            localStorage.setItem('spreadsheetId', spreadsheetId);
-            localStorage.setItem('sheetGid', sheetGid);
-
-            // Show todo container
+            const input = document.getElementById('spreadsheetId').value.trim();
+            const match = input.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+            const id = match ? match[1] : input;
+            const gid = document.getElementById('sheetGid').value.trim() || '0';
+            if (!id) return alert('Enter a Spreadsheet ID or URL');
+            config = { spreadsheetId: id, sheetGid: gid };
+            localStorage.setItem('spreadsheetId', id);
+            localStorage.setItem('sheetGid', gid);
             document.getElementById('configPanel').classList.add('hidden');
             document.getElementById('todoContainer').classList.remove('hidden');
-
-            // Fetch todos
             fetchTodos();
         }
 
         async function fetchTodos() {
-            const todoList = document.getElementById('todoList');
-            todoList.innerHTML = '<li class="loading">Loading todos...</li>';
+            const list = document.getElementById('todoList');
+            list.innerHTML = '<li class="loading">Loading...</li>';
 
-            try {
-                // Use Google Sheets CSV export (no API key needed for public sheets)
-                const url = `https://docs.google.com/spreadsheets/d/${config.spreadsheetId}/export?format=csv&gid=${config.sheetGid}`;
-                const response = await fetch(url);
+            // Try multiple methods to fetch data
+            const methods = [
+                // Method 1: Direct CSV export
+                async () => {
+                    const res = await fetch(`https://docs.google.com/spreadsheets/d/${config.spreadsheetId}/export?format=csv&gid=${config.sheetGid}`);
+                    if (!res.ok) throw new Error('Direct fetch failed');
+                    return parseCSV(await res.text());
+                },
+                // Method 2: CORS proxy (corsproxy.io)
+                async () => {
+                    const url = `https://docs.google.com/spreadsheets/d/${config.spreadsheetId}/export?format=csv&gid=${config.sheetGid}`;
+                    const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`);
+                    if (!res.ok) throw new Error('CORS proxy failed');
+                    return parseCSV(await res.text());
+                },
+                // Method 3: AllOrigins proxy
+                async () => {
+                    const url = `https://docs.google.com/spreadsheets/d/${config.spreadsheetId}/export?format=csv&gid=${config.sheetGid}`;
+                    const res = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`);
+                    if (!res.ok) throw new Error('AllOrigins failed');
+                    return parseCSV(await res.text());
+                },
+                // Method 4: Google Visualization API (JSONP-style)
+                () => new Promise((resolve, reject) => {
+                    const callbackName = 'gvizCallback_' + Date.now();
+                    const script = document.createElement('script');
+                    const timeout = setTimeout(() => { reject(new Error('JSONP timeout')); cleanup(); }, 10000);
 
-                if (!response.ok) {
-                    throw new Error('Failed to fetch sheet. Make sure it\'s shared publicly.');
+                    const cleanup = () => {
+                        clearTimeout(timeout);
+                        delete window[callbackName];
+                        if (script.parentNode) script.parentNode.removeChild(script);
+                    };
+
+                    window[callbackName] = (response) => {
+                        cleanup();
+                        if (response.status === 'error') reject(new Error(response.errors?.[0]?.message || 'JSONP error'));
+                        else {
+                            const table = response.table;
+                            const rows = [];
+                            if (table.cols) rows.push(table.cols.map(c => c.label || ''));
+                            if (table.rows) table.rows.forEach(r => rows.push(r.c.map(cell => cell ? (cell.v || '') : '')));
+                            resolve(rows);
+                        }
+                    };
+
+                    script.src = `https://docs.google.com/spreadsheets/d/${config.spreadsheetId}/gviz/tq?tqx=responseHandler:${callbackName}&gid=${config.sheetGid}`;
+                    script.onerror = () => { cleanup(); reject(new Error('JSONP script error')); };
+                    document.body.appendChild(script);
+                })
+            ];
+
+            for (const method of methods) {
+                try {
+                    const rows = await method();
+                    renderTodos(rows);
+                    return;
+                } catch (e) {
+                    console.log('Method failed:', e.message);
                 }
-
-                const csvText = await response.text();
-                const rows = parseCSV(csvText);
-                renderTodos(rows);
-            } catch (error) {
-                console.error('Error fetching todos:', error);
-                todoList.innerHTML = `<li class="error">Error: ${error.message}<br><button onclick="showConfig()">Check Settings</button></li>`;
             }
+
+            list.innerHTML = '<li class="error">Unable to fetch data. Make sure the sheet is public.</li>';
         }
 
-        function parseCSV(text) {
-            const rows = [];
-            let currentRow = [];
-            let currentCell = '';
-            let inQuotes = false;
-
-            for (let i = 0; i < text.length; i++) {
-                const char = text[i];
-                const nextChar = text[i + 1];
-
-                if (inQuotes) {
-                    if (char === '"' && nextChar === '"') {
-                        currentCell += '"';
-                        i++; // Skip next quote
-                    } else if (char === '"') {
-                        inQuotes = false;
-                    } else {
-                        currentCell += char;
-                    }
-                } else {
-                    if (char === '"') {
-                        inQuotes = true;
-                    } else if (char === ',') {
-                        currentRow.push(currentCell);
-                        currentCell = '';
-                    } else if (char === '\n' || (char === '\r' && nextChar === '\n')) {
-                        currentRow.push(currentCell);
-                        rows.push(currentRow);
-                        currentRow = [];
-                        currentCell = '';
-                        if (char === '\r') i++; // Skip \n in \r\n
-                    } else if (char !== '\r') {
-                        currentCell += char;
-                    }
-                }
+        function parseCSV(t) {
+            const rows = []; let row = [], cell = '', q = false;
+            for (let i = 0; i < t.length; i++) {
+                const c = t[i], n = t[i+1];
+                if (q) { if (c === '"' && n === '"') { cell += '"'; i++; } else if (c === '"') q = false; else cell += c; }
+                else { if (c === '"') q = true; else if (c === ',') { row.push(cell); cell = ''; }
+                else if (c === '\n' || (c === '\r' && n === '\n')) { row.push(cell); rows.push(row); row = []; cell = ''; if (c === '\r') i++; }
+                else if (c !== '\r') cell += c; }
             }
-
-            // Don't forget the last cell/row
-            if (currentCell || currentRow.length > 0) {
-                currentRow.push(currentCell);
-                rows.push(currentRow);
-            }
-
+            if (cell || row.length) { row.push(cell); rows.push(row); }
             return rows;
         }
 
         function renderTodos(rows) {
-            const todoList = document.getElementById('todoList');
+            const list = document.getElementById('todoList');
+            if (rows.length <= 1) return list.innerHTML = '<li class="empty">No todos found</li>';
+            const h = rows[0].map(x => (x||'').toLowerCase());
+            const ti = fc(h, ['task','todo','title','name']);
+            const si = fc(h, ['status','done','completed']);
+            const ci = fc(h, ['context','project','category']);
+            const di = fc(h, ['dri','owner','assignee']);
+            const todos = rows.slice(1).filter(r => r[ti]?.trim());
+            if (!todos.length) return list.innerHTML = '<li class="empty">No todos found</li>';
 
-            if (rows.length <= 1) {
-                todoList.innerHTML = '<li class="empty">No todos found. Add some tasks to your Google Sheet!</li>';
-                updateStats(0, 0);
-                return;
-            }
-
-            // Assume first row is header
-            const headers = rows[0].map(h => h.toLowerCase().trim());
-            const taskIndex = findColumnIndex(headers, ['task', 'todo', 'item', 'title', 'name', 'description']);
-            const statusIndex = findColumnIndex(headers, ['status', 'done', 'completed', 'complete', 'checked']);
-            const dateIndex = findColumnIndex(headers, ['due', 'due date', 'deadline', 'date']);
-            const driIndex = findColumnIndex(headers, ['dri', 'owner', 'assignee', 'assigned']);
-            const detailsIndex = findColumnIndex(headers, ['details', 'notes', 'description', 'context']);
-
-            const todos = rows.slice(1).filter(row => row[taskIndex]?.trim()); // Filter empty rows
-
-            if (todos.length === 0) {
-                todoList.innerHTML = '<li class="empty">No todos found. Add some tasks to your Google Sheet!</li>';
-                updateStats(0, 0);
-                return;
-            }
-
-            let completedCount = 0;
-
-            todoList.innerHTML = todos.map((row, index) => {
-                const task = row[taskIndex] || '';
-                const status = statusIndex !== -1 ? (row[statusIndex] || '').trim() : '';
-                const statusLower = status.toLowerCase();
-                const date = dateIndex !== -1 ? row[dateIndex] || '' : '';
-                const dri = driIndex !== -1 ? row[driIndex] || '' : '';
-                const details = detailsIndex !== -1 ? row[detailsIndex] || '' : '';
-
-                // Check if task is completed from sheet OR from local storage
-                const sheetCompleted = ['done', 'complete', 'completed', 'yes', 'true', '1', 'x', '✓', '✔'].includes(statusLower);
-                const taskKey = `${config.spreadsheetId}_${config.sheetGid}_${task}`;
-                const locallyCompleted = completedTasks.has(taskKey);
-                const isCompleted = sheetCompleted || locallyCompleted;
-                
-                if (isCompleted) completedCount++;
-
-                const statusClass = isCompleted ? 'status-done' : 'status-pending';
-                const statusText = status || (isCompleted ? 'Done' : 'Pending');
-
-                let metaHtml = '';
-                if (date || dri) {
-                    metaHtml = '<div class="todo-meta">';
-                    if (date) metaHtml += `<span>📅 ${escapeHtml(date)}</span>`;
-                    if (dri) metaHtml += `<span>👤 ${escapeHtml(dri)}</span>`;
-                    metaHtml += '</div>';
-                }
-
-                return `
-                    <li class="todo-item ${isCompleted ? 'completed' : ''}" data-task-key="${escapeHtml(taskKey)}">
-                        <div class="todo-checkbox" data-task-key="${escapeHtml(taskKey)}"></div>
-                        <div class="todo-content">
-                            <div class="todo-text">${escapeHtml(task)}</div>
-                            ${metaHtml}
+            list.innerHTML = todos.map(r => {
+                const task = r[ti] || '', status = (r[si]||'').toLowerCase(), ctx = ci >= 0 ? r[ci]||'' : '', dri = di >= 0 ? r[di]||'' : '';
+                const key = `${config.spreadsheetId}_${config.sheetGid}_${task}`;
+                const sheetDone = ['done','complete','completed','yes','true','x','✓'].includes(status);
+                const done = sheetDone || completedTasks.has(key);
+                const pending = status === 'pending' || (!done && status);
+                const ind = done ? 'indicator-done' : pending ? 'indicator-urgent' : 'indicator-normal';
+                const lindy = dri.toLowerCase().includes('lindy');
+                return `<li class="todo-item${done?' completed':''}">
+                    <div class="todo-indicator ${ind}" data-key="${esc(key)}"></div>
+                    <div class="todo-content">
+                        <div class="todo-title">${esc(task)}</div>
+                        <div class="todo-meta">
+                            ${ctx?`<span class="todo-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>${esc(ctx)}</span>`:''}
+                            ${ctx&&dri?'<span class="meta-dot">•</span>':''}
+                            ${dri?`<span class="assignee">${lindy?'<span class="assignee-icon"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12,2 15,8 22,9 17,14 18,21 12,18 6,21 7,14 2,9 9,8"/></svg></span>':'<span class="assignee-avatar"></span>'}${esc(dri)}</span>`:''}
                         </div>
-                        <span class="todo-status ${statusClass}">${escapeHtml(statusText)}</span>
-                    </li>
-                `;
+                    </div>
+                    ${pending&&!done?`<a href="#" class="todo-action" onclick="return false">Review <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></a>`:''}
+                </li>`;
             }).join('');
-
-            updateStats(todos.length, completedCount);
         }
 
-        function findColumnIndex(headers, possibleNames) {
-            for (let i = 0; i < headers.length; i++) {
-                if (possibleNames.some(name => headers[i].includes(name))) {
-                    return i;
-                }
-            }
-            return -1;
-        }
+        function fc(h, n) { for (let i = 0; i < h.length; i++) if (n.some(x => h[i].includes(x))) return i; return -1; }
 
-        function updateStats(total, completed) {
-            document.getElementById('totalTasks').textContent = total;
-            document.getElementById('completedTasks').textContent = completed;
-            document.getElementById('pendingTasks').textContent = total - completed;
-        }
-
-        function showConfig() {
-            document.getElementById('configPanel').classList.remove('hidden');
-            document.getElementById('todoContainer').classList.add('hidden');
-        }
-
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        function toggleTask(taskKey, checkboxElement) {
-            console.log('Toggle task:', taskKey); // Debug log
-            const todoItem = checkboxElement.closest('.todo-item');
-            const isCurrentlyCompleted = completedTasks.has(taskKey);
-
-            if (isCurrentlyCompleted) {
-                completedTasks.delete(taskKey);
-                todoItem.classList.remove('completed');
+        function toggleTask(key, el) {
+            const item = el.closest('.todo-item');
+            if (completedTasks.has(key)) {
+                completedTasks.delete(key);
+                item.classList.remove('completed');
+                el.className = 'todo-indicator indicator-urgent';
             } else {
-                completedTasks.add(taskKey);
-                todoItem.classList.add('completed');
+                completedTasks.add(key);
+                item.classList.add('completed');
+                el.className = 'todo-indicator indicator-done';
             }
-
-            // Save to localStorage
-            localStorage.setItem('completedTasks', JSON.stringify(Array.from(completedTasks)));
-
-            // Update status badge
-            const statusBadge = todoItem.querySelector('.todo-status');
-            if (completedTasks.has(taskKey)) {
-                statusBadge.textContent = 'Done';
-                statusBadge.className = 'todo-status status-done';
-            } else {
-                statusBadge.textContent = 'Pending';
-                statusBadge.className = 'todo-status status-pending';
-            }
-
-            // Update stats
-            const totalTodos = document.querySelectorAll('.todo-item').length;
-            const completedTodos = document.querySelectorAll('.todo-item.completed').length;
-            updateStats(totalTodos, completedTodos);
+            localStorage.setItem('completedTasks', JSON.stringify([...completedTasks]));
+            const action = item.querySelector('.todo-action');
+            if (action) action.style.display = completedTasks.has(key) ? 'none' : 'flex';
         }
+
+        function esc(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
     </script>
 </body>
 </html>
