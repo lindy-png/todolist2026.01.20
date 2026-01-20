@@ -316,16 +316,6 @@
             border-radius: 4px;
             font-size: 0.8rem;
         }
-
-        .success-badge {
-            background: #e8f5e9;
-            color: #2e7d32;
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            margin-bottom: 12px;
-            display: inline-block;
-        }
     </style>
 </head>
 <body>
@@ -335,14 +325,14 @@
         <div class="config-panel" id="configPanel">
             <h2>Connect to Google Sheets</h2>
             <input type="text" id="spreadsheetId" placeholder="Spreadsheet ID or full Google Sheets URL">
-            <input type="text" id="sheetGid" placeholder="Sheet GID (optional, default: 0)" value="0">
+            <input type="text" id="apiKey" placeholder="Google API Key">
+            <input type="text" id="sheetName" placeholder="Sheet name (optional, default: Sheet1)" value="Sheet1">
             <button onclick="connectSheet()">Connect</button>
             <div class="help-text">
-                <strong>Simple setup - no API key needed!</strong><br><br>
+                <strong>Setup:</strong><br>
                 1. Make your Google Sheet public (Share → Anyone with link)<br>
-                2. Paste your sheet URL or just the ID:<br>
-                   <code>docs.google.com/spreadsheets/d/<strong>[ID]</strong>/edit</code><br><br>
-                The GID is in the URL after <code>#gid=</code> (usually 0 for first sheet)
+                2. Get your Spreadsheet ID from the URL<br>
+                3. Enter your Google API Key<br>
             </div>
         </div>
 
@@ -380,43 +370,51 @@
         // Configuration
         let config = {
             spreadsheetId: localStorage.getItem('spreadsheetId') || '',
-            sheetGid: localStorage.getItem('sheetGid') || '0'
+            apiKey: localStorage.getItem('apiKey') || '',
+            sheetName: localStorage.getItem('sheetName') || 'Sheet1'
         };
 
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', () => {
-            if (config.spreadsheetId) {
+            if (config.spreadsheetId && config.apiKey) {
                 document.getElementById('spreadsheetId').value = config.spreadsheetId;
-                document.getElementById('sheetGid').value = config.sheetGid;
+                document.getElementById('apiKey').value = config.apiKey;
+                document.getElementById('sheetName').value = config.sheetName;
                 connectSheet();
             }
         });
 
         function extractSpreadsheetId(input) {
-            // If it's a full URL, extract the ID
             const match = input.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
             if (match) {
                 return match[1];
             }
-            // Otherwise assume it's already an ID
             return input.trim();
         }
 
         function connectSheet() {
             const rawInput = document.getElementById('spreadsheetId').value.trim();
             const spreadsheetId = extractSpreadsheetId(rawInput);
-            const sheetGid = document.getElementById('sheetGid').value.trim() || '0';
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const sheetName = document.getElementById('sheetName').value.trim() || 'Sheet1';
 
             if (!spreadsheetId) {
                 alert('Please enter a Spreadsheet ID or URL');
                 return;
             }
 
+            if (!apiKey) {
+                alert('Please enter your Google API Key');
+                return;
+            }
+
             // Save to localStorage
             config.spreadsheetId = spreadsheetId;
-            config.sheetGid = sheetGid;
+            config.apiKey = apiKey;
+            config.sheetName = sheetName;
             localStorage.setItem('spreadsheetId', spreadsheetId);
-            localStorage.setItem('sheetGid', sheetGid);
+            localStorage.setItem('apiKey', apiKey);
+            localStorage.setItem('sheetName', sheetName);
 
             // Show todo container
             document.getElementById('configPanel').classList.add('hidden');
@@ -431,111 +429,28 @@
             todoList.innerHTML = '<li class="loading">Loading todos...</li>';
 
             try {
-                // Fetch via JSONP-style callback using Google's visualization API
-                // This bypasses CORS since it uses a script tag
-                const csvText = await new Promise((resolve, reject) => {
-                    const callbackName = 'googleSheetCallback_' + Date.now();
-                    const script = document.createElement('script');
+                // Use Google Sheets API v4
+                const range = encodeURIComponent(`${config.sheetName}!A:Z`);
+                const url = `https://sheets.googleapis.com/v4/spreadsheets/${config.spreadsheetId}/values/${range}?key=${config.apiKey}`;
 
-                    window[callbackName] = function(response) {
-                        delete window[callbackName];
-                        document.head.removeChild(script);
+                const response = await fetch(url);
+                const data = await response.json();
 
-                        if (response.status === 'error') {
-                            reject(new Error(response.errors?.[0]?.message || 'Failed to load sheet'));
-                            return;
-                        }
+                if (data.error) {
+                    throw new Error(data.error.message || 'API Error');
+                }
 
-                        // Convert the table data to CSV
-                        const table = response.table;
-                        const rows = [];
+                if (!data.values || data.values.length === 0) {
+                    todoList.innerHTML = '<li class="empty">No data found in sheet.</li>';
+                    updateStats(0, 0);
+                    return;
+                }
 
-                        // Headers
-                        rows.push(table.cols.map(col => col.label || ''));
-
-                        // Data rows
-                        table.rows.forEach(row => {
-                            rows.push(row.c.map(cell => cell ? (cell.v || '') : ''));
-                        });
-
-                        // Convert to CSV string
-                        const csv = rows.map(row =>
-                            row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
-                        ).join('\n');
-
-                        resolve(csv);
-                    };
-
-                    script.onerror = () => {
-                        delete window[callbackName];
-                        reject(new Error('Failed to load sheet. Make sure it\'s shared publicly.'));
-                    };
-
-                    const jsonpUrl = `https://docs.google.com/spreadsheets/d/${config.spreadsheetId}/gviz/tq?tqx=out:json;responseHandler:${callbackName}&gid=${config.sheetGid}`;
-                    script.src = jsonpUrl;
-                    document.head.appendChild(script);
-
-                    // Timeout after 10 seconds
-                    setTimeout(() => {
-                        if (window[callbackName]) {
-                            delete window[callbackName];
-                            reject(new Error('Request timed out'));
-                        }
-                    }, 10000);
-                });
-
-                const rows = parseCSV(csvText);
-                renderTodos(rows);
+                renderTodos(data.values);
             } catch (error) {
                 console.error('Error fetching todos:', error);
                 todoList.innerHTML = `<li class="error">Error: ${error.message}<br><button onclick="showConfig()">Check Settings</button></li>`;
             }
-        }
-
-        function parseCSV(text) {
-            const rows = [];
-            let currentRow = [];
-            let currentCell = '';
-            let inQuotes = false;
-
-            for (let i = 0; i < text.length; i++) {
-                const char = text[i];
-                const nextChar = text[i + 1];
-
-                if (inQuotes) {
-                    if (char === '"' && nextChar === '"') {
-                        currentCell += '"';
-                        i++; // Skip next quote
-                    } else if (char === '"') {
-                        inQuotes = false;
-                    } else {
-                        currentCell += char;
-                    }
-                } else {
-                    if (char === '"') {
-                        inQuotes = true;
-                    } else if (char === ',') {
-                        currentRow.push(currentCell);
-                        currentCell = '';
-                    } else if (char === '\n' || (char === '\r' && nextChar === '\n')) {
-                        currentRow.push(currentCell);
-                        rows.push(currentRow);
-                        currentRow = [];
-                        currentCell = '';
-                        if (char === '\r') i++; // Skip \n in \r\n
-                    } else if (char !== '\r') {
-                        currentCell += char;
-                    }
-                }
-            }
-
-            // Don't forget the last cell/row
-            if (currentCell || currentRow.length > 0) {
-                currentRow.push(currentCell);
-                rows.push(currentRow);
-            }
-
-            return rows;
         }
 
         function renderTodos(rows) {
@@ -547,15 +462,14 @@
                 return;
             }
 
-            // Assume first row is header
-            const headers = rows[0].map(h => h.toLowerCase().trim());
+            // First row is header
+            const headers = rows[0].map(h => (h || '').toLowerCase().trim());
             const taskIndex = findColumnIndex(headers, ['task', 'todo', 'item', 'title', 'name', 'description']);
             const statusIndex = findColumnIndex(headers, ['status', 'done', 'completed', 'complete', 'checked']);
             const dateIndex = findColumnIndex(headers, ['due', 'due date', 'deadline', 'date']);
             const driIndex = findColumnIndex(headers, ['dri', 'owner', 'assignee', 'assigned']);
-            const detailsIndex = findColumnIndex(headers, ['details', 'notes', 'description', 'context']);
 
-            const todos = rows.slice(1).filter(row => row[taskIndex]?.trim()); // Filter empty rows
+            const todos = rows.slice(1).filter(row => row[taskIndex]?.trim());
 
             if (todos.length === 0) {
                 todoList.innerHTML = '<li class="empty">No todos found. Add some tasks to your Google Sheet!</li>';
@@ -569,9 +483,8 @@
                 const task = row[taskIndex] || '';
                 const status = statusIndex !== -1 ? (row[statusIndex] || '').trim() : '';
                 const statusLower = status.toLowerCase();
-                const date = dateIndex !== -1 ? row[dateIndex] || '' : '';
-                const dri = driIndex !== -1 ? row[driIndex] || '' : '';
-                const details = detailsIndex !== -1 ? row[detailsIndex] || '' : '';
+                const date = dateIndex !== -1 ? (row[dateIndex] || '') : '';
+                const dri = driIndex !== -1 ? (row[driIndex] || '') : '';
 
                 const isCompleted = ['done', 'complete', 'completed', 'yes', 'true', '1', 'x', '✓', '✔'].includes(statusLower);
                 if (isCompleted) completedCount++;
