@@ -432,7 +432,12 @@
 
             try {
                 // Use Google Sheets CSV export (no API key needed for public sheets)
-                const url = `https://docs.google.com/spreadsheets/d/${config.spreadsheetId}/export?format=csv&gid=${config.sheetGid}`;
+                const sheetUrl = `https://docs.google.com/spreadsheets/d/${config.spreadsheetId}/export?format=csv&gid=${config.sheetGid}`;
+
+                // Use CORS proxy to avoid cross-origin issues when running locally
+                const corsProxy = 'https://corsproxy.io/?';
+                const url = corsProxy + encodeURIComponent(sheetUrl);
+
                 const response = await fetch(url);
 
                 if (!response.ok) {
