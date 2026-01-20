@@ -435,7 +435,7 @@
                 const sheetUrl = `https://docs.google.com/spreadsheets/d/${config.spreadsheetId}/export?format=csv&gid=${config.sheetGid}`;
 
                 // Use CORS proxy to avoid cross-origin issues when running locally
-                const corsProxy = 'https://corsproxy.io/?';
+                const corsProxy = 'https://api.allorigins.win/raw?url=';
                 const url = corsProxy + encodeURIComponent(sheetUrl);
 
                 const response = await fetch(url);
