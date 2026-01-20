@@ -99,7 +99,12 @@
             color: #333;
         }
 
-        .refresh-btn {
+        .header-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .refresh-btn, .config-btn {
             background: none;
             border: 2px solid #667eea;
             color: #667eea;
@@ -110,9 +115,18 @@
             transition: all 0.2s;
         }
 
-        .refresh-btn:hover {
+        .refresh-btn:hover, .config-btn:hover {
             background: #667eea;
             color: white;
+        }
+
+        .config-btn {
+            border-color: #888;
+            color: #888;
+        }
+
+        .config-btn:hover {
+            background: #888;
         }
 
         .todo-list {
@@ -121,7 +135,7 @@
 
         .todo-item {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             padding: 16px;
             border-radius: 12px;
             margin-bottom: 12px;
@@ -149,6 +163,7 @@
             border-radius: 50%;
             border: 2px solid #667eea;
             margin-right: 16px;
+            margin-top: 2px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -168,40 +183,44 @@
 
         .todo-content {
             flex: 1;
+            min-width: 0;
         }
 
         .todo-text {
             font-size: 1rem;
             color: #333;
             margin-bottom: 4px;
+            line-height: 1.4;
         }
 
         .todo-meta {
             font-size: 0.85rem;
             color: #888;
+            margin-top: 4px;
         }
 
-        .todo-priority {
+        .todo-meta span {
+            margin-right: 12px;
+        }
+
+        .todo-status {
             padding: 4px 12px;
             border-radius: 20px;
             font-size: 0.75rem;
             font-weight: 600;
             text-transform: uppercase;
+            margin-left: 8px;
+            flex-shrink: 0;
         }
 
-        .priority-high {
-            background: #ffebee;
-            color: #c62828;
-        }
-
-        .priority-medium {
+        .status-pending {
             background: #fff3e0;
             color: #e65100;
         }
 
-        .priority-low {
-            background: #e3f2fd;
-            color: #1565c0;
+        .status-done {
+            background: #e8f5e9;
+            color: #2e7d32;
         }
 
         .loading {
@@ -233,6 +252,16 @@
             padding: 16px;
             border-radius: 8px;
             text-align: center;
+        }
+
+        .error button {
+            margin-top: 12px;
+            padding: 8px 16px;
+            background: #c62828;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
         }
 
         .empty {
@@ -278,10 +307,24 @@
             padding: 12px;
             background: #f8f9fa;
             border-radius: 8px;
+            line-height: 1.6;
         }
 
-        .help-text a {
-            color: #667eea;
+        .help-text code {
+            background: #e8e8e8;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        .success-badge {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            margin-bottom: 12px;
+            display: inline-block;
         }
     </style>
 </head>
@@ -291,23 +334,25 @@
 
         <div class="config-panel" id="configPanel">
             <h2>Connect to Google Sheets</h2>
-            <input type="text" id="spreadsheetId" placeholder="Spreadsheet ID (from URL)">
-            <input type="text" id="apiKey" placeholder="Google API Key">
-            <input type="text" id="sheetRange" placeholder="Range (e.g., Sheet1!A:D)" value="Sheet1!A:D">
+            <input type="text" id="spreadsheetId" placeholder="Spreadsheet ID or full Google Sheets URL">
+            <input type="text" id="sheetGid" placeholder="Sheet GID (optional, default: 0)" value="0">
             <button onclick="connectSheet()">Connect</button>
             <div class="help-text">
-                <strong>Setup:</strong><br>
+                <strong>Simple setup - no API key needed!</strong><br><br>
                 1. Make your Google Sheet public (Share → Anyone with link)<br>
-                2. Get your Spreadsheet ID from the URL:<br>
-                   <code>docs.google.com/spreadsheets/d/<strong>[SPREADSHEET_ID]</strong>/edit</code><br>
-                3. Get an API key from <a href="https://console.cloud.google.com/apis/credentials" target="_blank">Google Cloud Console</a>
+                2. Paste your sheet URL or just the ID:<br>
+                   <code>docs.google.com/spreadsheets/d/<strong>[ID]</strong>/edit</code><br><br>
+                The GID is in the URL after <code>#gid=</code> (usually 0 for first sheet)
             </div>
         </div>
 
         <div class="todo-container hidden" id="todoContainer">
             <div class="todo-header">
                 <h2>Tasks</h2>
-                <button class="refresh-btn" onclick="fetchTodos()">Refresh</button>
+                <div class="header-buttons">
+                    <button class="refresh-btn" onclick="fetchTodos()">Refresh</button>
+                    <button class="config-btn" onclick="showConfig()">Settings</button>
+                </div>
             </div>
 
             <div class="stats" id="stats">
@@ -335,37 +380,43 @@
         // Configuration
         let config = {
             spreadsheetId: localStorage.getItem('spreadsheetId') || '',
-            apiKey: localStorage.getItem('apiKey') || '',
-            range: localStorage.getItem('sheetRange') || 'Sheet1!A:D'
+            sheetGid: localStorage.getItem('sheetGid') || '0'
         };
 
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', () => {
-            if (config.spreadsheetId && config.apiKey) {
+            if (config.spreadsheetId) {
                 document.getElementById('spreadsheetId').value = config.spreadsheetId;
-                document.getElementById('apiKey').value = config.apiKey;
-                document.getElementById('sheetRange').value = config.range;
+                document.getElementById('sheetGid').value = config.sheetGid;
                 connectSheet();
             }
         });
 
-        function connectSheet() {
-            const spreadsheetId = document.getElementById('spreadsheetId').value.trim();
-            const apiKey = document.getElementById('apiKey').value.trim();
-            const range = document.getElementById('sheetRange').value.trim() || 'Sheet1!A:D';
+        function extractSpreadsheetId(input) {
+            // If it's a full URL, extract the ID
+            const match = input.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+            if (match) {
+                return match[1];
+            }
+            // Otherwise assume it's already an ID
+            return input.trim();
+        }
 
-            if (!spreadsheetId || !apiKey) {
-                alert('Please enter both Spreadsheet ID and API Key');
+        function connectSheet() {
+            const rawInput = document.getElementById('spreadsheetId').value.trim();
+            const spreadsheetId = extractSpreadsheetId(rawInput);
+            const sheetGid = document.getElementById('sheetGid').value.trim() || '0';
+
+            if (!spreadsheetId) {
+                alert('Please enter a Spreadsheet ID or URL');
                 return;
             }
 
             // Save to localStorage
             config.spreadsheetId = spreadsheetId;
-            config.apiKey = apiKey;
-            config.range = range;
+            config.sheetGid = sheetGid;
             localStorage.setItem('spreadsheetId', spreadsheetId);
-            localStorage.setItem('apiKey', apiKey);
-            localStorage.setItem('sheetRange', range);
+            localStorage.setItem('sheetGid', sheetGid);
 
             // Show todo container
             document.getElementById('configPanel').classList.add('hidden');
@@ -380,20 +431,67 @@
             todoList.innerHTML = '<li class="loading">Loading todos...</li>';
 
             try {
-                const url = `https://sheets.googleapis.com/v4/spreadsheets/${config.spreadsheetId}/values/${encodeURIComponent(config.range)}?key=${config.apiKey}`;
+                // Use Google Sheets CSV export (no API key needed for public sheets)
+                const url = `https://docs.google.com/spreadsheets/d/${config.spreadsheetId}/export?format=csv&gid=${config.sheetGid}`;
                 const response = await fetch(url);
 
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error?.message || 'Failed to fetch data');
+                    throw new Error('Failed to fetch sheet. Make sure it\'s shared publicly.');
                 }
 
-                const data = await response.json();
-                renderTodos(data.values || []);
+                const csvText = await response.text();
+                const rows = parseCSV(csvText);
+                renderTodos(rows);
             } catch (error) {
                 console.error('Error fetching todos:', error);
-                todoList.innerHTML = `<li class="error">Error: ${error.message}<br><br><button onclick="showConfig()">Check Configuration</button></li>`;
+                todoList.innerHTML = `<li class="error">Error: ${error.message}<br><button onclick="showConfig()">Check Settings</button></li>`;
             }
+        }
+
+        function parseCSV(text) {
+            const rows = [];
+            let currentRow = [];
+            let currentCell = '';
+            let inQuotes = false;
+
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                const nextChar = text[i + 1];
+
+                if (inQuotes) {
+                    if (char === '"' && nextChar === '"') {
+                        currentCell += '"';
+                        i++; // Skip next quote
+                    } else if (char === '"') {
+                        inQuotes = false;
+                    } else {
+                        currentCell += char;
+                    }
+                } else {
+                    if (char === '"') {
+                        inQuotes = true;
+                    } else if (char === ',') {
+                        currentRow.push(currentCell);
+                        currentCell = '';
+                    } else if (char === '\n' || (char === '\r' && nextChar === '\n')) {
+                        currentRow.push(currentCell);
+                        rows.push(currentRow);
+                        currentRow = [];
+                        currentCell = '';
+                        if (char === '\r') i++; // Skip \n in \r\n
+                    } else if (char !== '\r') {
+                        currentCell += char;
+                    }
+                }
+            }
+
+            // Don't forget the last cell/row
+            if (currentCell || currentRow.length > 0) {
+                currentRow.push(currentCell);
+                rows.push(currentRow);
+            }
+
+            return rows;
         }
 
         function renderTodos(rows) {
@@ -409,10 +507,11 @@
             const headers = rows[0].map(h => h.toLowerCase().trim());
             const taskIndex = findColumnIndex(headers, ['task', 'todo', 'item', 'title', 'name', 'description']);
             const statusIndex = findColumnIndex(headers, ['status', 'done', 'completed', 'complete', 'checked']);
-            const priorityIndex = findColumnIndex(headers, ['priority', 'importance', 'level']);
-            const dueDateIndex = findColumnIndex(headers, ['due', 'due date', 'deadline', 'date']);
+            const dateIndex = findColumnIndex(headers, ['due', 'due date', 'deadline', 'date']);
+            const driIndex = findColumnIndex(headers, ['dri', 'owner', 'assignee', 'assigned']);
+            const detailsIndex = findColumnIndex(headers, ['details', 'notes', 'description', 'context']);
 
-            const todos = rows.slice(1).filter(row => row[taskIndex]); // Filter empty rows
+            const todos = rows.slice(1).filter(row => row[taskIndex]?.trim()); // Filter empty rows
 
             if (todos.length === 0) {
                 todoList.innerHTML = '<li class="empty">No todos found. Add some tasks to your Google Sheet!</li>';
@@ -424,25 +523,34 @@
 
             todoList.innerHTML = todos.map(row => {
                 const task = row[taskIndex] || '';
-                const status = statusIndex !== -1 ? (row[statusIndex] || '').toLowerCase() : '';
-                const priority = priorityIndex !== -1 ? (row[priorityIndex] || '').toLowerCase() : '';
-                const dueDate = dueDateIndex !== -1 ? row[dueDateIndex] || '' : '';
+                const status = statusIndex !== -1 ? (row[statusIndex] || '').trim() : '';
+                const statusLower = status.toLowerCase();
+                const date = dateIndex !== -1 ? row[dateIndex] || '' : '';
+                const dri = driIndex !== -1 ? row[driIndex] || '' : '';
+                const details = detailsIndex !== -1 ? row[detailsIndex] || '' : '';
 
-                const isCompleted = ['done', 'complete', 'completed', 'yes', 'true', '1', 'x', '✓', '✔'].includes(status);
+                const isCompleted = ['done', 'complete', 'completed', 'yes', 'true', '1', 'x', '✓', '✔'].includes(statusLower);
                 if (isCompleted) completedCount++;
 
-                const priorityClass = priority.includes('high') ? 'priority-high' :
-                                     priority.includes('medium') || priority.includes('med') ? 'priority-medium' :
-                                     priority.includes('low') ? 'priority-low' : '';
+                const statusClass = isCompleted ? 'status-done' : 'status-pending';
+                const statusText = status || (isCompleted ? 'Done' : 'Pending');
+
+                let metaHtml = '';
+                if (date || dri) {
+                    metaHtml = '<div class="todo-meta">';
+                    if (date) metaHtml += `<span>📅 ${escapeHtml(date)}</span>`;
+                    if (dri) metaHtml += `<span>👤 ${escapeHtml(dri)}</span>`;
+                    metaHtml += '</div>';
+                }
 
                 return `
                     <li class="todo-item ${isCompleted ? 'completed' : ''}">
                         <div class="todo-checkbox"></div>
                         <div class="todo-content">
                             <div class="todo-text">${escapeHtml(task)}</div>
-                            ${dueDate ? `<div class="todo-meta">Due: ${escapeHtml(dueDate)}</div>` : ''}
+                            ${metaHtml}
                         </div>
-                        ${priority && priorityClass ? `<span class="todo-priority ${priorityClass}">${escapeHtml(priority)}</span>` : ''}
+                        <span class="todo-status ${statusClass}">${escapeHtml(statusText)}</span>
                     </li>
                 `;
             }).join('');
@@ -456,7 +564,7 @@
                     return i;
                 }
             }
-            return 0; // Default to first column
+            return -1;
         }
 
         function updateStats(total, completed) {
