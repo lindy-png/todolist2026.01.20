@@ -431,20 +431,35 @@
             todoList.innerHTML = '<li class="loading">Loading todos...</li>';
 
             try {
-                // Use Google Sheets CSV export (no API key needed for public sheets)
-                const sheetUrl = `https://docs.google.com/spreadsheets/d/${config.spreadsheetId}/export?format=csv&gid=${config.sheetGid}`;
+                // Use Google Sheets visualization API (works better with CORS)
+                const sheetUrl = `https://docs.google.com/spreadsheets/d/${config.spreadsheetId}/gviz/tq?tqx=out:csv&gid=${config.sheetGid}`;
 
-                // Use CORS proxy to avoid cross-origin issues when running locally
-                const corsProxy = 'https://api.allorigins.win/raw?url=';
-                const url = corsProxy + encodeURIComponent(sheetUrl);
+                // Try multiple CORS proxies as fallback
+                const corsProxies = [
+                    'https://corsproxy.io/?',
+                    'https://api.codetabs.com/v1/proxy?quest='
+                ];
 
-                const response = await fetch(url);
+                let csvText = null;
+                let lastError = null;
 
-                if (!response.ok) {
+                for (const proxy of corsProxies) {
+                    try {
+                        const url = proxy + encodeURIComponent(sheetUrl);
+                        const response = await fetch(url);
+                        if (response.ok) {
+                            csvText = await response.text();
+                            break;
+                        }
+                    } catch (e) {
+                        lastError = e;
+                    }
+                }
+
+                if (!csvText) {
                     throw new Error('Failed to fetch sheet. Make sure it\'s shared publicly.');
                 }
 
-                const csvText = await response.text();
                 const rows = parseCSV(csvText);
                 renderTodos(rows);
             } catch (error) {
